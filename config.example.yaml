@@ -62,6 +62,10 @@ retry:
 # Optional: what to do the instant the accept succeeds.
 on_success:
   webhook_url: null           # e.g. a Slack/Discord/ntfy URL to ping your phone
+  open_url: null              # HYBRID: on success, pop this checkout URL in your
+                              # DEFAULT browser (where you're logged in) so you can
+                              # finish card + 3-D Secure by hand. No Playwright needed.
+                              # e.g. "https://mywallet.cimea-diplome.it/checkout"
   next_request: null          # a SECOND request to "go forward" (e.g. confirm/checkout)
   # next_request:
   #   method: "POST"

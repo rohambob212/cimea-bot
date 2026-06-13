@@ -172,3 +172,15 @@ def _on_success(client: httpx.Client, conf: Dict[str, Any], context: Dict[str, A
             log.info("follow-up 'go forward with payment' request -> HTTP %d", resp.status_code)
         except Exception as exc:  # noqa: BLE001
             log.warning("follow-up request failed: %s", exc)
+
+    # HYBRID: pop the checkout page in the user's default browser (where they are
+    # logged in) so they can finish the card + 3-D Secure step by hand.
+    open_url = on_success.get("open_url")
+    if open_url:
+        try:
+            import webbrowser
+
+            webbrowser.open(open_url)
+            log.info("opened checkout in your default browser: %s", open_url)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("could not open browser (open it yourself: %s): %s", open_url, exc)
