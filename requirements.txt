@@ -1,0 +1,4 @@
+httpx[http2]>=0.27
+PyYAML>=6.0
+# Optional — only needed for the `browser` command (Type 2):
+#   pip install playwright && playwright install chromium

@@ -1,0 +1,14 @@
+# Your real config holds session cookies / tokens — never commit it.
+config.yaml
+*.curl
+captures/
+
+# Playwright persistent login profile.
+.cimea_profile/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env

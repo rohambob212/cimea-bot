@@ -1,0 +1,79 @@
+# cimea-bot example config.
+#
+# Copy this to `config.yaml` (which is git-ignored, because it will hold your
+# session cookies) and fill in the real request. The easiest way to get the
+# `request:` block is:
+#     python -m cimea_bot import-curl your-capture.curl --out config.yaml
+# then tweak the schedule + success criteria below. See README.md.
+
+schedule:
+  target_time: "15:00:00"     # 3:00 PM, in the timezone below
+  timezone: "Europe/Rome"     # CIMEA is Italy; this handles DST for you
+  date: null                  # null = next occurrence of target_time; or "2026-06-15"
+  lead_ms: 0                  # fire this many ms EARLY (set to ~half your ping to the site)
+  prewarm_ms: 750             # warm the connection this many ms before firing
+  use_ntp: true               # sync to true time so 15:00:00 is exact
+  ntp_server: "pool.ntp.org"
+
+# ---- Type 1: HTTP sniper (python -m cimea_bot run) -------------------------
+request:
+  method: "POST"
+  url: "https://mywallet.cimea-diplome.it/REPLACE/with/the/accept/endpoint"
+  headers:
+    # Paste the headers from your capture. Keep Authorization / X-CSRF-* etc.
+    accept: "application/json"
+  cookies:
+    # Your logged-in session cookies (SENSITIVE — config.yaml is git-ignored).
+    SESSION: "REPLACE_ME"
+  body: null                  # raw string body, or use body_json below
+  # body_json: { "requestId": 12345, "action": "accept" }
+  timeout_ms: 8000
+  http2: false                # set true only if the site speaks HTTP/2
+
+# Optional cheap GET fired ~prewarm_ms before T to keep the TLS connection hot.
+prewarm:
+  method: "GET"
+  url: "https://mywallet.cimea-diplome.it/REPLACE/with/your/dashboard"
+
+# What counts as a win. ALL listed conditions must hold (else default = HTTP 2xx).
+success:
+  status_in: [200, 201, 202, 302]
+  # body_contains: "confirmed"
+  # body_not_contains: "error"
+
+retry:
+  max_attempts: 40
+  backoff_initial_ms: 150
+  backoff_max_ms: 3000
+  backoff_factor: 2.0
+  jitter_ms: 250
+  retry_on_status: [429, 500, 502, 503, 504]
+  respect_retry_after: true   # be polite: obey the server's Retry-After header
+  give_up_after_seconds: 120
+
+# Optional: a GET that tells a STANDBY machine "it's already paid, stand down".
+# Used only with --standby-delay-ms. Prevents two machines double-firing.
+# precheck:
+#   method: "GET"
+#   url: "https://mywallet.cimea-diplome.it/REPLACE/with/status/endpoint"
+#   success:
+#     body_contains: "PAID"
+
+# Optional: what to do the instant the accept succeeds.
+on_success:
+  webhook_url: null           # e.g. a Slack/Discord/ntfy URL to ping your phone
+  next_request: null          # a SECOND request to "go forward" (e.g. confirm/checkout)
+  # next_request:
+  #   method: "POST"
+  #   url: "https://mywallet.cimea-diplome.it/REPLACE/with/confirm/endpoint"
+  #   body_json: { "step": "confirm" }
+
+# ---- Type 2: browser pilot (python -m cimea_bot browser) -------------------
+# Only needed if you use the `browser` command instead of `run`.
+browser:
+  page_url: "https://mywallet.cimea-diplome.it/"
+  button_selector: "button:has-text('Accept')"   # CSS / Playwright text selector
+  success_selector: null                          # e.g. "text=Payment confirmed"
+  user_data_dir: "./.cimea_profile"               # persistent login profile (git-ignored)
+  headless: false
+  click_timeout_ms: 5000
